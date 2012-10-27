@@ -1,0 +1,8 @@
+SparseBitmap
+(c) 2012
+Daniel Lemire (http://lemire.me/en/), 
+
+
+Alternative compressed bitmap implementations in Java such as JavaEWAH can be a bit overengineered. The goal of this project is to come up with a very simple alternative that has good performance.
+
+Licensing: Apache
