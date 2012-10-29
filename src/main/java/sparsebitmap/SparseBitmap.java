@@ -7,6 +7,7 @@ import java.util.PriorityQueue;
 
 
 
+
 public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
 
  
@@ -25,6 +26,26 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     sizeinwords = off + 1;
     cardinality += Integer.bitCount(wo);
   }
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof SparseBitmap) {
+      for (int k = 0; k < this.wordusage; ++k) {
+        if (this.buffer[k] != ((SparseBitmap) o).buffer[k])
+          return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    int buf = 0;
+    for (int k = 0; k < this.wordusage; ++k )
+      buf = 31 * buf +  this.buffer[k];
+    return buf;
+  }
+  
   
   public int[] toArray() {
     IntIterator i = getIntIterator();
@@ -339,6 +360,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
   public int sizeInBytes() {
     return wordusage * 4;
   }
+
 
   public int sizeinwords;
   public int cardinality;
