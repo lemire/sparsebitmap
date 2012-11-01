@@ -1,14 +1,40 @@
+/**
+ * Copyright 2012 Daniel Lemire
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package sparsebitmap;
 
+/**
+ * This class provides an interface that the developer can use to provide
+ * alternative storage mechanisms. (For expert use.)
+ * 
+ * @author Daniel Lemire
+ */
 public interface BitmapContainer {
   /**
+   * See Sparsebitmap.add
    * 
    * @param wo
    *          dirty word to add
    * @param off
-   *          position at (total size will be off+1)
+   *          position at 
    */
   public void add(int wo, int off);
 
+  /**
+   * See Sparsebitmap.sizeInBytes
+   * @return 
+   */
   public int sizeInBytes();
 }

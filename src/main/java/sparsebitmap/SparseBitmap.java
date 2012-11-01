@@ -1,3 +1,18 @@
+/**
+ * Copyright 2012 Daniel Lemire
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package sparsebitmap;
 
 import java.util.Arrays;
@@ -6,15 +21,24 @@ import java.util.Iterator;
 import java.util.PriorityQueue;
 
 
-
-
+/**
+ * The purpose of this class is to provide a compressed alternative to the
+ * Java BitSet class that can scale to much larger bit ranges. It also
+ * offers good processing performance while remaining simple.
+ * 
+ * @author Daniel Lemire
+ */
 public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
 
  
   /**
+   * For expert use: add a literal bitmap word so that
+   * the resulting bitmap will cover off+1 words. This
+   * function does minimal checking: to input data in the
+   * bitmap, you might be better off with the set method.
    * 
    * @param wo
-   *          dirty word to add
+   *          literal bitmap word to add
    * @param off
    *          position at (total size will be off+1)
    */
@@ -27,7 +51,13 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     cardinality += Integer.bitCount(wo);
   }
   
-  // same as add but without updating the cardinality counter
+  /**
+   *  same as add but without updating the cardinality counter,
+   *  strictly for internal use.
+   *  
+   * @param wo
+   * @param off
+   */
   private void fastadd(int wo, int off) {
     if(wordusage+2 > buffer.length)
       buffer = Arrays.copyOf(buffer, buffer.length * 2);
@@ -35,6 +65,13 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     buffer[wordusage++] = wo;
     sizeinwords = off + 1;
   }
+  
+  /**
+   * Checks whether two SparseBitmap have the same bit sets. Return true
+   * if so.
+   * 
+   * @return whether the two objects have the same set bits
+   */
   @Override
   public boolean equals(Object o) {
     if (o instanceof SparseBitmap) {
@@ -47,6 +84,10 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     return false;
   }
 
+  /**
+   * Return a hash value for this object. Uses a Karp-Rabin hash function.
+   * @return the hash value
+   */
   @Override
   public int hashCode() {
     int buf = 0;
@@ -55,7 +96,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     return buf;
   }
   
-  
+  /**
+   * Convenience method: returns an array containing the set
+   * bits.
+   * @return array corresponding to the position of the set bits.
+   */
   public int[] toArray() {
     IntIterator i = getIntIterator();
     int[] answer = new int[cardinality];
@@ -64,6 +109,13 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     return answer;
   }
 
+  /**
+   * Convenience method: will construct a bitmap with the 
+   * specified bit sets. Note that the list of integers should
+   * be sorted in increasing order.
+   * @param k the list of bits to set
+   * @return the corresponding SparseBitmap object.
+   */
   public static SparseBitmap bitmapOf(int... k) {
     SparseBitmap s = new SparseBitmap();
     for (int i : k) {
@@ -72,10 +124,17 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     return s;
   }
 
+  /**
+   * Set the bit at position i to true. The SparseBitmap will
+   * automatically expand. Note that you need to set the bits
+   * in sorted order (e.g., 1,2,5,6 and not 6,4,1,2). If the
+   * bit cannot be set, an IllegalArgumentException is thrown. 
+   * @param i
+   */
   public void set(int i) {
     int offset = i - sizeinwords * WORDSIZE;
     if (offset + WORDSIZE < 0) {
-      throw new RuntimeException("unsupported write back");
+      throw new IllegalArgumentException("unsupported write back");
     } else if ((offset + WORDSIZE >= 0) && (offset < 0)) {
       final int before = buffer[wordusage - 1];
       buffer[wordusage - 1] |= 1 << (offset + WORDSIZE);
@@ -89,6 +148,12 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
 
   }
 
+  
+  /**
+   * Allow you to iterate over the set bits
+   * 
+   * @return Iterator over the set bits 
+   */
   public Iterator<Integer> iterator() {
     final IntIterator under = this.getIntIterator();
     return new Iterator<Integer>() {
@@ -107,6 +172,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     };
   }
 
+  /**
+   * Build a fast iterator over the set bits
+   * 
+   * @return the iterator over the set bits
+   */
   public IntIterator getIntIterator() {
     return new IntIterator() {
       int wordindex ;
@@ -143,12 +213,26 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     }.init(buffer,this.wordusage);
   }
   
+  
+  /**
+   * Compute the bit-wise logical and with another bitmap.
+   * 
+   * @param o another bitmap
+   * @return the result of the bit-wise logical and
+   */
   public SparseBitmap and(SparseBitmap o) {
     SparseBitmap a = new SparseBitmap();
     and2by2(a,this,o);
     return a;
   }
 
+  /**
+   * Computes the bit-wise logical exclusive and of two bitmaps.
+   * 
+   * @param container where the data will be stored
+   * @param bitmap1 the first bitmap
+   * @param bitmap2 the second bitmap
+   */
   public static void and2by2(BitmapContainer container, SparseBitmap bitmap1, SparseBitmap bitmap2) {
     int it1 = 0;
     int it2 = 0;
@@ -181,12 +265,25 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     }
   }
 
+  /**
+   * Computes the bit-wise logical or with another bitmap.
+   * 
+   * @param o another bitmap
+   * @return the result of the bit-wise logical or
+   */
   public SparseBitmap or(SparseBitmap o) {
     SparseBitmap a = new SparseBitmap();
     or2by2(a,this,o);
     return a;
   }
 
+  /**
+   * Computes the bit-wise logical or of two bitmaps.
+   * 
+   * @param container where the data will be stored
+   * @param bitmap1 the first bitmap
+   * @param bitmap2 the second bitmap
+   */
   public static void or2by2(BitmapContainer container, SparseBitmap bitmap1,
     SparseBitmap bitmap2) {
     int it1 = 0;
@@ -239,19 +336,31 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
       }
     }
     while (it2 < bitmap2.wordusage) {
-      System.out.println("==***= p1 =" + p1 + " p2 = " + p2);
-      System.out.println("34%%  p2 = " + p2);
       container.add(bitmap2.buffer[it2 + 1], p2);
       it2 += 2;
       p2 += bitmap2.buffer[it2] + 1;
     }
   }
 
+  /**
+   * Computes the bit-wise logical exclusive or with another bitmap.
+   * 
+   * @param o another bitmap
+   * @return the result of the bti-wise logical exclusive or
+   */
   public SparseBitmap xor(SparseBitmap o) {
     SparseBitmap a = new SparseBitmap();
     xor2by2(a,this,o);
     return a;
   }
+  
+  /**
+   * Computes the bit-wise logical exclusive or of two bitmaps.
+   * 
+   * @param container where the data will be stored
+   * @param bitmap1 the first bitmap
+   * @param bitmap2 the second bitmap
+   */
   public static void xor2by2(BitmapContainer container, SparseBitmap bitmap1,
     SparseBitmap bitmap2) {
     int it1 = 0;
@@ -313,12 +422,20 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     }
   }
   
-  static Comparator<SparseBitmap> smallfirst = new Comparator<SparseBitmap>() {   
+  /**
+   * Used with the priority queues used for aggregating several bitmaps.
+   */
+  private static Comparator<SparseBitmap> smallfirst = new Comparator<SparseBitmap>() {   
     public int compare(SparseBitmap a, SparseBitmap b) {
       return a.sizeInBytes() - b.sizeInBytes();
     }
   };
   
+  /**
+   * Computes the bit-wise and aggregate over several bitmaps.
+   * @param bitmaps the bitmaps to aggregate
+   * @return the resulting bitmap
+   */
   public static SparseBitmap and(SparseBitmap...bitmaps) {
     if(bitmaps.length == 0) 
       return new SparseBitmap();
@@ -339,7 +456,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     }
     return pq.poll();
   }
-  
+  /**
+   * Computes the bit-wise or aggregate over several bitmaps.
+   * @param bitmaps the bitmaps to aggregate
+   * @return the resulting bitmap
+   */  
   public static SparseBitmap or(SparseBitmap...bitmaps) {
     if(bitmaps.length == 0) 
       return new SparseBitmap();
@@ -359,7 +480,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     }
     return pq.poll();
   }
-
+  /**
+   * Computes the bit-wise exclusive or aggregate over several bitmaps.
+   * @param bitmaps the bitmaps to aggregate
+   * @return the resulting bitmap
+   */
   public static SparseBitmap xor(SparseBitmap...bitmaps) {
     if(bitmaps.length == 0) 
       return new SparseBitmap();
@@ -379,47 +504,71 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     return pq.poll();
   }
   
-  
-  public static void main(String[] args) {
-    SparseBitmap sp1 = SparseBitmap.bitmapOf(1, 2, 100, 150, 1000, 123456);
-
-    for (int i : sp1)
-      System.out.print(i + " ");
-    System.out.println();
-
-    SparseBitmap sp2 = SparseBitmap.bitmapOf(1, 2, 3, 1000, 123456, 1234567);
-
-    for (int i : sp2)
-      System.out.print(i + " ");
-    System.out.println();
-
-    SparseBitmap sand = sp1.and(sp2);
-
-    System.out.println("and:");
-
-    for (int i : sand)
-      System.out.print(i + " ");
-    System.out.println();
     
-    SparseBitmap sor = sp1.or(sp2);
-    
-    System.out.println("or:");
-
-    for (int i : sor)
-      System.out.print(i + " ");
-    System.out.println();
-
-  }
-  
+  /**
+   * Return how much space is used by data  (in bytes).
+   * 
+   * 
+   * @return the 
+   */
   public int sizeInBytes() {
     return wordusage * 4;
   }
+  
+  /**
+   * Minimizes the memory usage by copying over the data on 
+   * a smaller array.
+   * 
+   * @return new memory usage for the internal array (in bytes)
+   */
+  public int compact() {
+    if(wordusage>=2)
+      buffer = Arrays.copyOf(buffer, wordusage);
+    return buffer.length * 4;
+  }
+  
+  /**
+   * Constructs a SparseBitmap object with default parameters.
+   */
+  public SparseBitmap() {
+    this(MINSTORAGEUSAGE);
+  }
+  
+  /**
+   * Constructs a SparseBitmap object.
+   * 
+   * @param expectedstoragesize this parameter corresponds to the initial memory allocation
+   */
+  public SparseBitmap(int expectedstoragesize) {
+    buffer = new int[expectedstoragesize];
+  }
 
-
+  /**
+   * sizeinwords*32 is the the number of bits represented by this
+   * bitmap.
+   */
   public int sizeinwords;
+  /**
+   * Number of bits set to true.
+   */
   public int cardinality;
-  public int[] buffer = new int[32];
+  /**
+   * MINSTORAGEUSAGE determines how big the initial array is, by default.
+   */
+  public final static int MINSTORAGEUSAGE = 32;
+  
+  /**
+   * buffer is where the data is store. The format is 
+   * 32-bit for the offset, 32-bit for a literal bitmap
+   */
+  public int[] buffer;
+  /**
+   * How many words in buffer do we actually use?
+   */
   public int wordusage = 0;
+  /**
+   * We have a 32-bit implementation (ints are 32-bit in Java).
+   */
   public static final int WORDSIZE = 32;
 
     

@@ -3,6 +3,42 @@ SparseBitmap
 Daniel Lemire (http://lemire.me/en/), 
 
 
-Alternative compressed bitmap implementations in Java such as JavaEWAH can be a bit overengineered. The goal of this project is to come up with a very simple alternative that has good performance.
+Very simple sparse bitmap implementation that has good performance.
 
-Licensing: Apache
+Licensing: Apache License, Version 2.0
+
+
+Usage:
+
+
+  public static void main(String[] args) {
+    SparseBitmap sp1 = SparseBitmap.bitmapOf(1, 2, 100, 150, 1000, 123456);
+
+    for (int i : sp1)
+      System.out.print(i + " ");
+    System.out.println();
+
+    SparseBitmap sp2 = SparseBitmap.bitmapOf(1, 2, 3, 1000, 123456, 1234567);
+
+    for (int i : sp2)
+      System.out.print(i + " ");
+    System.out.println();
+
+    SparseBitmap sand = sp1.and(sp2);
+
+    System.out.println("and:");
+
+    for (int i : sand)
+      System.out.print(i + " ");
+    System.out.println();
+    
+    SparseBitmap sor = sp1.or(sp2);
+    
+    System.out.println("or:");
+
+    for (int i : sor)
+      System.out.print(i + " ");
+    System.out.println();
+
+  }
+
