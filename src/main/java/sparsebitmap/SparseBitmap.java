@@ -26,6 +26,15 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     sizeinwords = off + 1;
     cardinality += Integer.bitCount(wo);
   }
+  
+  // same as add but without updating the cardinality counter
+  private void fastadd(int wo, int off) {
+    if(wordusage+2 > buffer.length)
+      buffer = Arrays.copyOf(buffer, buffer.length * 2);
+    buffer[wordusage++] = off - sizeinwords;
+    buffer[wordusage++] = wo;
+    sizeinwords = off + 1;
+  }
   @Override
   public boolean equals(Object o) {
     if (o instanceof SparseBitmap) {
@@ -57,8 +66,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
 
   public static SparseBitmap bitmapOf(int... k) {
     SparseBitmap s = new SparseBitmap();
-    for (int i : k)
+    for (int i : k) {
       s.set(i);
+    }
     return s;
   }
 
@@ -67,12 +77,16 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     if (offset + WORDSIZE < 0) {
       throw new RuntimeException("unsupported write back");
     } else if ((offset + WORDSIZE >= 0) && (offset < 0)) {
+      final int before = buffer[wordusage - 1];
       buffer[wordusage - 1] |= 1 << (offset + WORDSIZE);
+      if(before != buffer[wordusage - 1]) ++ cardinality;
     } else {
       final int numberofemptywords = offset / WORDSIZE;
       offset -= numberofemptywords * WORDSIZE;
-      add(1 << offset,sizeinwords+numberofemptywords);
+      fastadd(1 << offset,sizeinwords+numberofemptywords);
+      ++cardinality;
     }
+
   }
 
   public Iterator<Integer> iterator() {
@@ -138,7 +152,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
   public static void and2by2(BitmapContainer container, SparseBitmap bitmap1, SparseBitmap bitmap2) {
     int it1 = 0;
     int it2 = 0;
-    int p1 = 0, p2 = 0;
+    int p1 = bitmap1.buffer[it1], p2 = bitmap2.buffer[it2];
     int buff;
     while (true) {
       if (p1 < p2) {
@@ -147,7 +161,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
         it1 += 2;
         p1 += bitmap1.buffer[it1] + 1;
       } else if (p1 > p2) {
-        if (it2 + 2 >= bitmap1.wordusage)
+        if (it2 + 2 >= bitmap2.wordusage)
           break;
         it2 += 2;
         p2 += bitmap2.buffer[it2] + 1;
@@ -156,7 +170,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
           container.add(buff, p1);
         }
 
-        if ((it1 + 2 >= bitmap1.wordusage) || (it2 + 2 >= bitmap1.wordusage))
+        if ((it1 + 2 >= bitmap1.wordusage) || (it2 + 2 >= bitmap2.wordusage))
           break;
 
         it1 += 2;
@@ -172,44 +186,64 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     or2by2(a,this,o);
     return a;
   }
-  public static void or2by2(BitmapContainer container, SparseBitmap bitmap1, SparseBitmap bitmap2) {
+
+  public static void or2by2(BitmapContainer container, SparseBitmap bitmap1,
+    SparseBitmap bitmap2) {
     int it1 = 0;
     int it2 = 0;
-    int p1 = bitmap1.buffer[it1], p2 = bitmap2.buffer[it2];
-    while (true) {
-      if (p1 < p2) {
-        container.add(bitmap1.buffer[it1+1],p1);
-        if (it1 + 2 >= bitmap1.wordusage)
-          break;
-        it1 += 2;
-        p1 += bitmap1.buffer[it1] + 1;
-      } else if (p1 > p2) {
-        container.add(bitmap2.buffer[it2+1],p2);
-        if (it2 + 2 >= bitmap2.wordusage)
-          break;
-        it2 += 2;
-        p2 += bitmap2.buffer[it2] + 1;
-      } else {
-        container.add(bitmap1.buffer[it1+1] | bitmap2.buffer[it2+1], p1);
-        if ((it1 + 2 >= bitmap1.wordusage) || (it2 + 2 >= bitmap2.wordusage))
-          break;
+    int p1 = bitmap1.buffer[it1];
+    int p2 = bitmap2.buffer[it2];
+    if ((it1 < bitmap1.wordusage) && (it2 < bitmap2.wordusage))
+      while (true) {
+        if (p1 < p2) {
+          container.add(bitmap1.buffer[it1 + 1], p1);
+          it1 += 2;
+          if (it1 >= bitmap1.wordusage)
+            break;
+          p1 += bitmap1.buffer[it1] + 1;
+        } else if (p1 > p2) {
+          container.add(bitmap2.buffer[it2 + 1], p2);
+          it2 += 2;
+          if (it2 >= bitmap2.wordusage)
+            break;
+          p2 += bitmap2.buffer[it2] + 1;
+        } else {
+          container.add(bitmap1.buffer[it1 + 1] | bitmap2.buffer[it2 + 1], p1);
+          it1 += 2;
+          it2 += 2;
+          if (it1 < bitmap1.wordusage)
+            p1 += bitmap1.buffer[it1] + 1;
+          if (it2 < bitmap2.wordusage)
+            p2 += bitmap2.buffer[it2] + 1;
+          if ((it1 >= bitmap1.wordusage) || (it2 >= bitmap2.wordusage))
+            break;
+        }
+      }
 
+    if (it1 < bitmap1.wordusage) {
+      while (true) {
+        container.add(bitmap1.buffer[it1 + 1], p1);
         it1 += 2;
-        it2 += 2;
+        if (it1 == bitmap1.wordusage)
+          break;
         p1 += bitmap1.buffer[it1] + 1;
-        p2 += bitmap2.buffer[it2] + 1;
-
       }
     }
-    while (it1 + 2 < bitmap1.wordusage) {
-      it1 += 2;
-      p1 += bitmap1.buffer[it1] + 1;
-      container.add(bitmap1.buffer[it1+1],p1);
+    if (it2 < bitmap2.wordusage) {
+      while (true) {
+        container.add(bitmap2.buffer[it2 + 1], p2);
+        it2 += 2;
+        if (it2 == bitmap2.wordusage)
+          break;
+        p2 += bitmap2.buffer[it2] + 1;
+      }
     }
-    while (it2 + 2 < bitmap2.wordusage) {
+    while (it2 < bitmap2.wordusage) {
+      System.out.println("==***= p1 =" + p1 + " p2 = " + p2);
+      System.out.println("34%%  p2 = " + p2);
+      container.add(bitmap2.buffer[it2 + 1], p2);
       it2 += 2;
       p2 += bitmap2.buffer[it2] + 1;
-      container.add(bitmap2.buffer[it2+1],p2);
     }
   }
 
@@ -218,44 +252,64 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     xor2by2(a,this,o);
     return a;
   }
-  
-  public static void xor2by2(BitmapContainer container, SparseBitmap bitmap1, SparseBitmap bitmap2) {
+  public static void xor2by2(BitmapContainer container, SparseBitmap bitmap1,
+    SparseBitmap bitmap2) {
     int it1 = 0;
     int it2 = 0;
-    int p1 = bitmap1.buffer[it1], p2 = bitmap2.buffer[it2];
-    while (true) {
-      if (p1 < p2) {
-        container.add(bitmap1.buffer[it1+1],p1);
-        if (it1 + 2 >= bitmap1.wordusage)
-          break;
+    int p1 = bitmap1.buffer[it1];
+    int p2 = bitmap2.buffer[it2];
+    if ((it1 < bitmap1.wordusage) && (it2 < bitmap2.wordusage))
+      while (true) {
+        if (p1 < p2) {
+          container.add(bitmap1.buffer[it1 + 1], p1);
+          it1 += 2;
+          if (it1 >= bitmap1.wordusage)
+            break;
+          p1 += bitmap1.buffer[it1] + 1;
+        } else if (p1 > p2) {
+          container.add(bitmap2.buffer[it2 + 1], p2);
+          it2 += 2;
+          if (it2 >= bitmap2.wordusage)
+            break;
+          p2 += bitmap2.buffer[it2] + 1;
+        } else {
+          if(bitmap1.buffer[it1+1] != bitmap2.buffer[it2+1])
+            container.add(bitmap1.buffer[it1 + 1] ^ bitmap2.buffer[it2 + 1], p1);
+          it1 += 2;
+          it2 += 2;
+          if (it1 < bitmap1.wordusage)
+            p1 += bitmap1.buffer[it1] + 1;
+          if (it2 < bitmap2.wordusage)
+            p2 += bitmap2.buffer[it2] + 1;
+          if ((it1 >= bitmap1.wordusage) || (it2 >= bitmap2.wordusage))
+            break;
+        }
+      }
+
+    if (it1 < bitmap1.wordusage) {
+      while (true) {
+        container.add(bitmap1.buffer[it1 + 1], p1);
         it1 += 2;
-        p1 += bitmap1.buffer[it1] + 1;
-      } else if (p1 > p2) {
-        container.add(bitmap2.buffer[it2+1],p2);
-        if (it2 + 2 >= bitmap2.wordusage)
+        if (it1 == bitmap1.wordusage)
           break;
-        it2 += 2;
-        p2 += bitmap2.buffer[it2] + 1;
-      } else {
-        if(bitmap1.buffer[it1+1] != bitmap2.buffer[it2+1])
-           container.add(bitmap1.buffer[it1+1] ^ bitmap2.buffer[it2+1], p1);
-        if ((it1 + 2 >= bitmap1.wordusage) || (it2 + 2 >= bitmap2.wordusage))
-          break;
-        it1 += 2;
-        it2 += 2;
         p1 += bitmap1.buffer[it1] + 1;
+      }
+    }
+    if (it2 < bitmap2.wordusage) {
+      while (true) {
+        container.add(bitmap2.buffer[it2 + 1], p2);
+        it2 += 2;
+        if (it2 == bitmap2.wordusage)
+          break;
         p2 += bitmap2.buffer[it2] + 1;
       }
     }
-    while (it1 + 2 < bitmap1.wordusage) {
-      it1 += 2;
-      p1 += bitmap1.buffer[it1] + 1;
-      container.add(bitmap1.buffer[it1+1],p1);
-    }
-    while (it2 + 2 < bitmap2.wordusage) {
+    while (it2 < bitmap2.wordusage) {
+      System.out.println("==***= p1 =" + p1 + " p2 = " + p2);
+      System.out.println("34%%  p2 = " + p2);
+      container.add(bitmap2.buffer[it2 + 1], p2);
       it2 += 2;
       p2 += bitmap2.buffer[it2] + 1;
-      container.add(bitmap2.buffer[it2+1],p2);
     }
   }
   
@@ -368,5 +422,6 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
   public int wordusage = 0;
   public static final int WORDSIZE = 32;
 
-
+    
 }
+
