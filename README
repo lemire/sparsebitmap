@@ -41,4 +41,21 @@ Usage:
     System.out.println();
 
   }
+  
+
+Maven support:
+
+You can also specify the dependency in the Maven "pom.xml" file:
+
+{{{
+  <dependencies>
+    <dependency>
+	<groupId>com.googlecode.sparsebitmap</groupId>
+	<artifactId>SparseBitmap</artifactId>
+	<version>0.0.2</version>
+    </dependency>
+  </dependencies>
+}}}
+
+Make sure to replace the version number with the version you actually want.
 
