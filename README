@@ -3,7 +3,7 @@ SparseBitmap
 Daniel Lemire (http://lemire.me/en/), 
 
 
-Very simple sparse bitmap implementation that has good performance.
+A simple sparse bitmap implementation that has good performance.
 
 Licensing: Apache License, Version 2.0
 
