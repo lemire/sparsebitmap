@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.PriorityQueue;
 
 
+
 /**
  * The purpose of this class is to provide a compressed alternative to the
  * Java BitSet class that can scale to much larger bit ranges. It also
@@ -28,7 +29,7 @@ import java.util.PriorityQueue;
  * 
  * @author Daniel Lemire
  */
-public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
+public class SparseBitmap implements Iterable<Integer>, BitmapContainer, Cloneable {
 
  
   /**
@@ -543,6 +544,17 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
     buffer = new int[expectedstoragesize];
   }
 
+
+  @Override
+  public Object clone() throws java.lang.CloneNotSupportedException {
+    SparseBitmap b = (SparseBitmap) super.clone();
+    b.buffer = Arrays.copyOf(this.buffer, this.buffer.length);
+    b.wordusage = this.wordusage;
+    b.sizeinwords = this.sizeinwords;
+    b.cardinality = this.cardinality;
+    return b;
+  }
+  
   /**
    * sizeinwords*32 is the the number of bits represented by this
    * bitmap.
@@ -571,6 +583,5 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer {
    */
   public static final int WORDSIZE = 32;
 
-    
 }
 
