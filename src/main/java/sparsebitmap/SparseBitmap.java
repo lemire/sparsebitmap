@@ -109,6 +109,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer, Cloneab
       answer[k] = i.next();
     return answer;
   }
+  
 
   /**
    * Convenience method: will construct a bitmap with the 
@@ -544,6 +545,15 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer, Cloneab
     buffer = new int[expectedstoragesize];
   }
 
+  /**
+  * Reinitialize this bitmap.
+  */
+  public void clear() {
+    wordusage = 0;
+    Arrays.fill(buffer, 0);
+    sizeinwords = 0;
+    cardinality = 0;
+  }
 
   @Override
   public Object clone() throws java.lang.CloneNotSupportedException {
