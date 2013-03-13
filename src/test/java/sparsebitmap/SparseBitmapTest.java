@@ -27,7 +27,8 @@ public class SparseBitmapTest {
     if(set.length == 0) throw new RuntimeException("nothing");
     PriorityQueue<int[]> pq = new PriorityQueue<int[]>(set.length,
       new Comparator<int[]>(){
-        public int compare(int[] a, int[] b) {
+        @Override
+		public int compare(int[] a, int[] b) {
           return a.length - b.length;
         }}
      );
@@ -91,7 +92,8 @@ public class SparseBitmapTest {
     if(set.length == 0) throw new RuntimeException("nothing");
     PriorityQueue<int[]> pq = new PriorityQueue<int[]>(set.length,
       new Comparator<int[]>(){
-        public int compare(int[] a, int[] b) {
+        @Override
+		public int compare(int[] a, int[] b) {
           return a.length - b.length;
         }}
      );
@@ -195,6 +197,9 @@ public class SparseBitmapTest {
       for(int k = 0; k< N ; ++k )
         array[k] = k*skip +skip;
       final SparseBitmap b1 = SparseBitmap.bitmapOf(array);
+      if(!Arrays.equals(array, b1.toArray())) {
+          throw new RuntimeException("basic bug");
+      }
       for(int skip2 = 1; skip2 <=M; ++skip2) {
         int[] array2 = new int[N];
         for(int k = 0; k< N ; ++k )
@@ -203,6 +208,9 @@ public class SparseBitmapTest {
         int[] answerxor = exclusiveunite(array,array2);
         int[] answerand = intersect(array,array2);
         final SparseBitmap b2 = SparseBitmap.bitmapOf(array2);
+        if(!Arrays.equals(array2, b2.toArray())) {
+            throw new RuntimeException("basic bug");
+        }
         if(!Arrays.equals(answeror, b1.or(b2).toArray())) {
           throw new RuntimeException("bug or");
         }

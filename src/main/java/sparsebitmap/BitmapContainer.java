@@ -32,9 +32,4 @@ public interface BitmapContainer {
    */
   public void add(int wo, int off);
 
-  /**
-   * See Sparsebitmap.sizeInBytes
-   * @return 
-   */
-  public int sizeInBytes();
 }

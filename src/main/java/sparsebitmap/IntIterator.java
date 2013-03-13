@@ -16,26 +16,26 @@
 package sparsebitmap;
 
 /**
- * The purpose of this class is to provide a simple iterator interface
- * for integers. It is mostly just used for better performance compared
- * to the default Java iterator.
+ * The purpose of this class is to provide a simple iterator interface for
+ * integers. It is mostly just used for better performance compared to the
+ * default Java iterator.
  * 
  * @author Daniel Lemire
  */
 public interface IntIterator {
-  
-  /**
-   * Is there more?
-   *
-   * @return true, if there is more, false otherwise
-   */
-  public boolean hasNext();
 
-  /**
-   * Returns the next integer
-   *
-   * @return the integer
-   */
-  public int next();
+	/**
+	 * Is there more?
+	 * 
+	 * @return true, if there is more, false otherwise
+	 */
+	public boolean hasNext();
+
+	/**
+	 * Returns the next integer
+	 * 
+	 * @return the integer
+	 */
+	public int next();
 
 }
