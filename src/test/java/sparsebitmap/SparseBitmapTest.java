@@ -186,6 +186,7 @@ public class SparseBitmapTest {
   }
 
   
+  @SuppressWarnings("static-method")
   @Test
   public  void testOps() {
     System.out.println("Testing AND/OR/XOR");

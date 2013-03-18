@@ -895,7 +895,12 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 		}
 		return pq.poll();
 	}
-
+	public static SkippableIterator fastand(SparseBitmap... bitmaps) {
+		SkippableIterator[] si = new SkippableIterator[bitmaps.length];
+		for(int k = 0; k < bitmaps.length; ++k)
+			si[k] = bitmaps[k].getSkippableIterator();
+		return fastand(si);
+	}
 	/**
 	 * Computes the bit-wise or aggregate over several bitmaps.
 	 * 

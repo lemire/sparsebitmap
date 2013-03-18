@@ -1,0 +1,2 @@
+- add support for negation... maybe with a flag added to both the iterators and the bitmaps.
+- clean up the methods to compute ands (there are too many)
