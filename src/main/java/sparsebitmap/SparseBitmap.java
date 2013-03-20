@@ -55,9 +55,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 	/**
 	 * same as add but without updating the cardinality counter, strictly for
 	 * internal use.
-	 *
-	 * @param wo the wo
-	 * @param off the off
+	 * 
+	 * @param wo
+	 *            the wo
+	 * @param off
+	 *            the off
 	 */
 	private void fastadd(int wo, int off) {
 		this.buffer.add(off - this.sizeinwords);
@@ -68,8 +70,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 	/**
 	 * Checks whether two SparseBitmap have the same bit sets. Return true if
 	 * so.
-	 *
-	 * @param o the o
+	 * 
+	 * @param o
+	 *            the o
 	 * @return whether the two objects have the same set bits
 	 */
 	@Override
@@ -145,8 +148,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 	 * expand. Note that you need to set the bits in sorted order (e.g., 1,2,5,6
 	 * and not 6,4,1,2). If the bit cannot be set, an IllegalArgumentException
 	 * is thrown.
-	 *
-	 * @param i the i
+	 * 
+	 * @param i
+	 *            the i
 	 */
 	public void set(int i) {
 		int offset = i - this.sizeinwords * WORDSIZE;
@@ -168,7 +172,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Allow you to iterate over the set bits.
-	 *
+	 * 
 	 * @return Iterator over the set bits
 	 */
 	@Override
@@ -196,7 +200,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Build a fast iterator over the set bits.
-	 *
+	 * 
 	 * @return the iterator over the set bits
 	 */
 	public IntIterator getIntIterator() {
@@ -297,8 +301,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * And.
-	 *
-	 * @param bitmap the bitmap
+	 * 
+	 * @param bitmap
+	 *            the bitmap
 	 * @return the skippable iterator
 	 */
 	public static SkippableIterator and(final SkippableIterator... bitmap) {
@@ -395,8 +400,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Fastand.
-	 *
-	 * @param bitmap the bitmap
+	 * 
+	 * @param bitmap
+	 *            the bitmap
 	 * @return the skippable iterator
 	 */
 	public static SkippableIterator fastand(final SkippableIterator... bitmap) {
@@ -421,14 +427,40 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 					if (!i.hasValue())
 						return this;
 				this.maxval = bitmap[0].getCurrentWordOffset();
-				for (int k = 1; k < bitmap.length; ++k)
-					if (this.maxval < bitmap[k].getCurrentWordOffset())
+				this.sbscardinality = 1;
+
+				for (int k = 1; k < bitmap.length; ++k) {
+					if (this.maxval < bitmap[k].getCurrentWordOffset()) {
 						this.maxval = bitmap[k].getCurrentWordOffset();
-				for (int k = 0; k < bitmap.length; ++k)
-					if (bitmap[k].getCurrentWordOffset() == this.maxval) {
-						++this.sbscardinality;
+						this.sbscardinality = 1;
+					} else
+						this.sbscardinality += 1;
+				}
+
+				while (this.sbscardinality < bitmap.length) {
+					for (int k = 0; k < bitmap.length; ++k)
+						if (bitmap[k].getCurrentWordOffset() == this.maxval) {
+							++this.sbscardinality;
+							if (this.sbscardinality == bitmap.length)
+								break;
+						} else if (bitmap[k].getCurrentWordOffset() < this.maxval) {
+							bitmap[k].advanceUntil(this.maxval);
+							if (!bitmap[k].hasValue())
+								return this;
+							this.maxval = bitmap[k].getCurrentWordOffset();
+							this.sbscardinality = 1;
+						}
+					this.wordval = bitmap[0].getCurrentWord();
+					for (int k = 1; k < bitmap.length; ++k) {
+						this.wordval &= bitmap[k].getCurrentWord();
 					}
-				movetonext();
+					if (this.wordval == 0)
+						advance();
+					else {
+						this.hasvalue = true;
+					}
+
+				}
 				return this;
 			}
 
@@ -444,9 +476,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 							this.maxval = bitmap[i].getCurrentWordOffset();
 							this.sbscardinality = 1;
 							break;
-						} else if (bitmap[i].getCurrentWordOffset() == this.maxval) {
-							++this.sbscardinality;
 						}
+						++this.sbscardinality;
+
 					}
 				this.wordval = bitmap[0].getCurrentWord();
 				for (int k = 1; k < bitmap.length; ++k) {
@@ -468,6 +500,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 				}
 				this.sbscardinality = 1;
 				this.maxval = bitmap[0].getCurrentWordOffset();
+
 				for (int k = 1; k < bitmap.length; ++k) {
 					SkippableIterator b = bitmap[k];
 					b.advanceUntil(this.maxval);
@@ -478,7 +511,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 					if (b.getCurrentWordOffset() > this.maxval) {
 						this.maxval = b.getCurrentWordOffset();
 						this.sbscardinality = 1;
-					} else if (b.getCurrentWordOffset() == this.maxval) {
+					} else {
 						++this.sbscardinality;
 					}
 				}
@@ -505,8 +538,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Treeand.
-	 *
-	 * @param bitmap the bitmap
+	 * 
+	 * @param bitmap
+	 *            the bitmap
 	 * @return the skippable iterator
 	 */
 	public static SkippableIterator treeand(SkippableIterator... bitmap) {
@@ -532,8 +566,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Flatand.
-	 *
-	 * @param bitmap the bitmap
+	 * 
+	 * @param bitmap
+	 *            the bitmap
 	 * @return the skippable iterator
 	 */
 	public static SkippableIterator flatand(SkippableIterator... bitmap) {
@@ -548,8 +583,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Reverseflatand.
-	 *
-	 * @param bitmap the bitmap
+	 * 
+	 * @param bitmap
+	 *            the bitmap
 	 * @return the skippable iterator
 	 */
 	public static SkippableIterator reverseflatand(SkippableIterator... bitmap) {
@@ -564,8 +600,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Materialize.
-	 *
-	 * @param i the i
+	 * 
+	 * @param i
+	 *            the i
 	 * @return the sparse bitmap
 	 */
 	public static SparseBitmap materialize(SkippableIterator i) {
@@ -579,8 +616,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Cardinality.
-	 *
-	 * @param i the i
+	 * 
+	 * @param i
+	 *            the i
 	 * @return the int
 	 */
 	public static int cardinality(SkippableIterator i) {
@@ -594,9 +632,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * And2by2.
-	 *
-	 * @param bitmap1 the bitmap1
-	 * @param bitmap2 the bitmap2
+	 * 
+	 * @param bitmap1
+	 *            the bitmap1
+	 * @param bitmap2
+	 *            the bitmap2
 	 * @return the skippable iterator
 	 */
 	public static SkippableIterator and2by2(final SkippableIterator bitmap1,
@@ -895,12 +935,14 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 		}
 		return pq.poll();
 	}
+
 	public static SkippableIterator fastand(SparseBitmap... bitmaps) {
 		SkippableIterator[] si = new SkippableIterator[bitmaps.length];
-		for(int k = 0; k < bitmaps.length; ++k)
+		for (int k = 0; k < bitmaps.length; ++k)
 			si[k] = bitmaps[k].getSkippableIterator();
 		return fastand(si);
 	}
+
 	/**
 	 * Computes the bit-wise or aggregate over several bitmaps.
 	 * 
@@ -992,7 +1034,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Gets the skippable iterator.
-	 *
+	 * 
 	 * @return the skippable iterator
 	 */
 	public SkippableIterator getSkippableIterator() {
@@ -1040,9 +1082,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Synchronize two iterators
-	 *
-	 * @param o1 the first iterator
-	 * @param o2 the second iterator
+	 * 
+	 * @param o1
+	 *            the first iterator
+	 * @param o2
+	 *            the second iterator
 	 * @return true, if successful
 	 */
 	public static boolean match(SkippableIterator o1, SkippableIterator o2) {
@@ -1084,9 +1128,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Serialize.
-	 *
-	 * @param out the stream
-	 * @throws IOException Signals that an I/O exception has occurred.
+	 * 
+	 * @param out
+	 *            the stream
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public void serialize(DataOutput out) throws IOException {
 		this.buffer.serialize(out);
@@ -1094,9 +1140,11 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Deserialize.
-	 *
-	 * @param in the stream
-	 * @throws IOException Signals that an I/O exception has occurred.
+	 * 
+	 * @param in
+	 *            the stream
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
 	 */
 	public void deserialize(DataInput in) throws IOException {
 		this.buffer.deserialize(in);
@@ -1108,7 +1156,7 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 
 	/**
 	 * Compute the cardinality.
-	 *
+	 * 
 	 * @return the cardinality
 	 */
 	public int cardinality() {
@@ -1127,7 +1175,9 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 		this.sizeinwords = 0;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#clone()
 	 */
 	@Override

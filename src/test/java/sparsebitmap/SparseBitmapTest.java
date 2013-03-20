@@ -193,15 +193,17 @@ public class SparseBitmapTest {
     final int N = 40;
     final int M = 100;
     
-    for(int skip = 1; skip <=M; ++skip) {
-      int[] array = new int[N];
+//    for(int skip = 1; skip <=M; ++skip) {
+    for(int skip = 4; skip <=4; ++skip) {
+    	      int[] array = new int[N];
       for(int k = 0; k< N ; ++k )
         array[k] = k*skip +skip;
       final SparseBitmap b1 = SparseBitmap.bitmapOf(array);
       if(!Arrays.equals(array, b1.toArray())) {
           throw new RuntimeException("basic bug");
       }
-      for(int skip2 = 1; skip2 <=M; ++skip2) {
+      //for(int skip2 = 1; skip2 <=M; ++skip2) {
+      for(int skip2 = M; skip2 <=M; ++skip2) {
         int[] array2 = new int[N];
         for(int k = 0; k< N ; ++k )
           array2[k] = k*skip2 +skip2;
@@ -218,6 +220,13 @@ public class SparseBitmapTest {
         if(!Arrays.equals(answerand, b1.and(b2).toArray())) {
           throw new RuntimeException("bug and");
         }
+        if(!Arrays.equals(answerand, SparseBitmap.materialize(SparseBitmap.and(b1.getSkippableIterator(),b2.getSkippableIterator())).toArray())) {
+            throw new RuntimeException("bug and");
+          }
+        if(!Arrays.equals(answerand, SparseBitmap.materialize(SparseBitmap.fastand(b1.getSkippableIterator(),b2.getSkippableIterator())).toArray())) {
+            throw new RuntimeException("bug and");
+          }
+
         if(!Arrays.equals(answerxor, b1.xor(b2).toArray())) {
           throw new RuntimeException("bug xor");
         }
