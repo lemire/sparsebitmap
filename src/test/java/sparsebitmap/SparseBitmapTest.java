@@ -193,7 +193,6 @@ public class SparseBitmapTest {
     final int N = 40;
     final int M = 100;
     
-//    for(int skip = 1; skip <=M; ++skip) {
     for(int skip = 4; skip <=4; ++skip) {
     	      int[] array = new int[N];
       for(int k = 0; k< N ; ++k )
