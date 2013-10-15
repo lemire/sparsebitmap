@@ -171,6 +171,30 @@ public class IntArray implements Cloneable {
 			buf = 31 * buf + this.array[k];
 		return buf;
 	}
+	
+	/**
+	 * Determine whether these two arrays contain the same integers.
+	 * 
+	 * @author Michal Zerola 
+	 * 
+	 * @param obj the other object (must be an IntArray to be equal)
+	 * @return whether they are equal.
+	 */
+	@Override
+	public boolean equals(Object obj) {
+	  if (obj == null) return false;
+	  if (this == obj) return true;
+	  if (!(obj instanceof IntArray)) return false;
+
+	  IntArray objArray = (IntArray) obj;
+	  if (this.size != objArray.size) return false;
+	  for (int k = 0; k < this.size; ++k) {
+	    if (this.array[k] != objArray.array[k]) {
+	      return false;
+	    }
+	  }
+	  return true;
+	}
 
 	/** The array. */
 	private int[] array;

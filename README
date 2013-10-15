@@ -1,6 +1,7 @@
 SparseBitmap
 (c) 2012
-Daniel Lemire (http://lemire.me/en/), 
+Daniel Lemire (http://lemire.me/en/) with contributions from
+Michal Zerola (https://github.com/zerola)
 
 
 A simple sparse bitmap implementation that has good performance.
