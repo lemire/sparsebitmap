@@ -3,7 +3,7 @@
 
     <groupId>com.googlecode.sparsebitmap</groupId>
     <artifactId>SparseBitmap</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.4</version>
     <packaging>jar</packaging>
 
     <properties>
