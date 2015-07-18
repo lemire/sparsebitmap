@@ -337,11 +337,6 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer, Cloneab
         p2 += bitmap2.buffer[it2] + 1;
       }
     }
-    while (it2 < bitmap2.wordusage) {
-      container.add(bitmap2.buffer[it2 + 1], p2);
-      it2 += 2;
-      p2 += bitmap2.buffer[it2] + 1;
-    }
   }
 
   /**
