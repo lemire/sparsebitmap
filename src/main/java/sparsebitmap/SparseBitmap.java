@@ -804,11 +804,6 @@ public class SparseBitmap implements Iterable<Integer>, BitmapContainer,
 				p2 += bitmap2.buffer.get(it2) + 1;
 			}
 		}
-		while (it2 < bitmap2.buffer.size()) {
-			container.add(bitmap2.buffer.get(it2 + 1), p2);
-			it2 += 2;
-			p2 += bitmap2.buffer.get(it2) + 1;
-		}
 	}
 
 	/**
