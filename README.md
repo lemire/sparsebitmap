@@ -1,7 +1,8 @@
 ## SparseBitmap
-(c) 2012
-Daniel Lemire (http://lemire.me/en/) with contributions from
-Michal Zerola (https://github.com/zerola)
+[![][maven img]][maven]
+[![][license img]][license]
+[![docs-badge][]][docs]
+
 
 
 A simple sparse bitmap implementation that has good performance.
@@ -10,6 +11,8 @@ Licensing: Apache License, Version 2.0
 
 
 ## Usage:
+
+API: http://www.javadoc.io/doc/com.googlecode.sparsebitmap/SparseBitmap/
 
 ```
   public static void main(String[] args) {
@@ -60,3 +63,16 @@ You can also specify the dependency in the Maven "pom.xml" file:
 
 Make sure to replace the version number with the version you actually want.
 
+## Contributors
+
+Daniel Lemire (http://lemire.me/en/) with contributions from
+Michal Zerola (https://github.com/zerola)
+
+[maven img]:https://maven-badges.herokuapp.com/maven-central/org.roaringbitmap/RoaringBitmap/badge.svg
+[maven]:http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22SparseBitmap%22
+
+[license]:LICENSE
+[license img]:https://img.shields.io/badge/License-Apache%202-blue.svg
+
+[docs-badge]:https://img.shields.io/badge/API-docs-blue.svg?style=flat-square
+[docs]:http://www.javadoc.io/doc/com.googlecode.sparsebitmap/SparseBitmap
